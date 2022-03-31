@@ -79,7 +79,7 @@
                 }
                 bookURL = MIRROR_URL + bookURL + "/" + response.results[i].id + "/" + response.results[i].id + "-0.txt";
                 console.log("Retrieving book .txt file from " + bookURL);
-                getFullText(bookURL);
+                eel.getBookText(bookURL);
             });
 
 
@@ -92,30 +92,6 @@
             book.appendChild(titleBtn);
 
             document.querySelector('#results').appendChild(book);
-        }
-    }
-
-    /**
-     * This function fetches the queried input from the user based on their button
-     * choice. The function will first check the status of the response from the
-     * API return value. If the API response is 'ok,' then convert the response
-     * into json data so that the helper function can process its contents. If
-     * there's an error regarding the content of json data, it will catch the error.
-     * @param {string} bookURL - URL string value of API
-     * @return {void}
-     */
-    function getFullText(bookURL) {
-        try {
-            eel.getBookText(bookURL);
-        } catch (e) {
-            console.error(e);
-            bookURL = bookURL.substring(0, bookURL.length() - 6) + ".txt";
-            console.log("Retry retrieval with alternate .txt file from " + bookURL);
-            try {
-                eel.getBookText(bookURL);
-            } catch (er) {
-                console.error(er);
-            }
         }
     }
 
