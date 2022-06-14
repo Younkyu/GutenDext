@@ -5,6 +5,25 @@
     const MIRROR_URL = "http://mirrors.xmission.com/gutenberg";
 
     var bookContent = "";
+    var res;
+
+    let typingText = document.querySelector('.typing-text p');
+    let inpField = document.querySelector('.wrapper .input-field');
+    let backButton = document.querySelector('.content-box > button');
+    let previousButton = document.querySelectorAll('.content button')[0];
+    let nextButton = document.querySelectorAll('.content button')[1];
+    let pageLabel = document.querySelector('.content > p');
+    let timeTag = document.querySelector('.time span b');
+    let mistakeTag = document.querySelector('.mistake span');
+    let wpmTag = document.querySelector('.wpm span');
+    let cpmTag = document.querySelector('.cpm span');
+    let timer,
+        maxTime = 120,
+        timeLeft = maxTime,
+        charIndex = 0;
+    let mistakes = 0;
+    let isTyping = 0;
+    let pageNumber = 0;
 
     window.addEventListener('load', init);
 
@@ -16,8 +35,51 @@
     function init() {
         let searchBar = document.querySelector('#welcome input[type=text]');
         document.querySelector('#welcome button').addEventListener('click', () => {
+            document.querySelector('#results').classList.add('hidden');
+            document.querySelector('#description').classList.add('hidden');
+            document.querySelector('#loading').classList.remove('hidden');
             getResults(searchBar.value);
+            setTimeout(function() {
+                document.querySelector('#loading').classList.add('hidden');
+                document.querySelector('#results').classList.remove('hidden');
+            }, 3000);
         });
+
+        let confirmButton = document.querySelector('#description button');
+        confirmButton.addEventListener('click', () => {
+            document.querySelector('#description').classList.add('hidden');
+            document.querySelector('#loading').classList.remove('hidden');
+            setTimeout(function() {
+                pageNumber = 0;
+                loadPage();
+            }, 1000);
+            setTimeout(function() {
+                document.querySelector('#loading').classList.add('hidden');
+                document.querySelector('#game').classList.remove('hidden');
+                searchBar.classList.add('hidden');
+                document.querySelector('#welcome button').classList.add('hidden');
+            }, 3000);
+        });
+
+        inpField = document.querySelector('.wrapper .input-field');
+        inpField.addEventListener("input", initTyping);
+
+        previousButton = document.querySelectorAll('.content button')[0];
+        previousButton.addEventListener("click", previousPage);
+
+        nextButton = document.querySelectorAll('.content button')[1];
+        nextButton.addEventListener("click", nextPage);
+
+        backButton = document.querySelector('.content-box > button');
+        backButton.addEventListener("click", backToDescriptionPage);
+
+        pageLabel = document.querySelector('.content > p');
+        typingText = document.querySelector('.typing-text p');
+        timeTag = document.querySelector('.time span b');
+        mistakeTag = document.querySelector('.mistake span');
+        wpmTag = document.querySelector('.wpm span');
+        cpmTag = document.querySelector('.cpm span');
+
 
         eel.expose(returnResult);
     }
@@ -25,9 +87,29 @@
     function returnResult(result) {
         document.querySelector('#results').innerHTML = '';
         bookContent = result;
-        let actualText = document.createElement('p');
-        actualText.textContent = bookContent;
-        document.querySelector('#results').appendChild(actualText);
+
+        // FILL IN DETAILS IN PAGE AFTER LOADING
+        let bookWords = bookContent.split(" ");
+        document.querySelector('#wordCount').textContent = 'Word Count: ' + bookWords.length;
+        document.querySelector('#characterCount').textContent = 'Character Count: ' + bookContent.length;
+
+        // SAVE BOOK's CONTENT IN pages.js
+        while (pages.length > 0) {
+            pages.pop();
+        }
+        for (let n = 0; n < bookWords.length;) {
+            let page = "";
+            let m = 0;
+            for (; m < 200; m++) {
+                if ((m + n) < bookWords.length) {
+                    page += bookWords[m + n] + " ";
+                } else {
+                    break;
+                }
+            }
+            n += m + 1;
+            pages.push(page);
+        }
     }
 
     /**
@@ -59,17 +141,25 @@
      * @return {void}
      */
     function displayResults(response) {
+        res = response;
+        document.querySelector('#description').classList.add('hidden');
+        document.querySelector('#game').classList.add('hidden');
         document.querySelector('#results').innerHTML = '';
         for (let i = 0; i < response.results.length; i++) {
             let book = document.createElement('div');
 
             let titleBtn = document.createElement('button');
-            titleBtn.textContent = response.results[i].title;
+            titleBtn.textContent = 'Select';
 
 
             // CHANGE THE BOTTOM EVENTLISTENER SO THAT WHEN THE TITLE TEXT IS CLICKED,
             // THE PAGE WILL DISPLAY DETAILS ABOUT THE BOOK
             titleBtn.addEventListener('click', () => {
+                document.querySelector('#results').innerHTML = '';
+                document.querySelector('#results').classList.add('hidden');
+                document.querySelector('#description').classList.remove('hidden');
+                console.log('Displaying details for book number ' + i);
+
                 let bookID = response.results[i].id;
                 let bookURL = "";
                 bookID = Math.floor(bookID / 10);
@@ -80,6 +170,8 @@
                 bookURL = MIRROR_URL + bookURL + "/" + response.results[i].id + "/" + response.results[i].id + "-0.txt";
                 console.log("Retrieving book .txt file from " + bookURL);
                 eel.getBookText(bookURL);
+
+                showDescription(i);
             });
 
 
@@ -92,6 +184,27 @@
             book.appendChild(titleBtn);
 
             document.querySelector('#results').appendChild(book);
+        }
+    }
+
+    function showDescription(i) {
+        // CREATE A NEW IMAGE ELEMENT DISPLAYING THE BOOK'S COVER IMAGE
+        let img = document.querySelector('#description > article > img');
+        img.src = res.results[i].formats["image/jpeg"];
+        img.alt = 'Cover image of ' + res.results[i].title;
+
+
+        // FILL IN DETAILS OF THE BOOK
+        document.querySelector('#title').textContent = 'Title: ' + res.results[i].title;
+        document.querySelector('#author').textContent = 'Author: ' + res.results[i].authors[0].name;
+        document.querySelector('#wordCount').textContent = 'Word Count: ...';
+        document.querySelector('#characterCount').textContent = 'Character Count: ...';
+        document.querySelector('#subjects > ul').innerHTML = '';
+        let sbjts = res.results[i].subjects;
+        for (let n = 0; n < sbjts.length; n++) {
+            let subjectItem = document.createElement('li');
+            subjectItem.textContent = sbjts[n];
+            document.querySelector('#subjects > ul').appendChild(subjectItem);
         }
     }
 
@@ -124,4 +237,128 @@
         return response;
     }
 
+    // const typingText = document.querySelector(".typing-text p"),
+    //     inpField = document.querySelector(".wrapper .input-field"),
+    //     tryAgainBtn = document.querySelector(".content button"),
+    //     timeTag = document.querySelector(".time span b"),
+    //     mistakeTag = document.querySelector(".mistake span"),
+    //     wpmTag = document.querySelector(".wpm span"),
+    //     cpmTag = document.querySelector(".cpm span");
+    // let timer,
+    //     maxTime = 60,
+    //     timeLeft = maxTime,
+    //     charIndex = 0;
+    // let mistakes = 0;
+    // let isTyping = 0;
+
+    function loadPage() {
+        pageLabel.innerHTML = 'Page ' + (pageNumber + 1) + ' of ' + pages.length;
+        typingText.innerHTML = '';
+        pages[pageNumber].split("").forEach(char => {
+            let span = `<span>${char}</span>`
+            typingText.innerHTML += span;
+        });
+        typingText.querySelectorAll("span")[0].classList.add("active");
+        document.addEventListener("keydown", () => inpField.focus());
+        typingText.addEventListener("click", () => inpField.focus());
+    }
+
+    function initTyping() {
+        let characters = typingText.querySelectorAll("span");
+        let typedChar = inpField.value.split("")[charIndex];
+        if (charIndex < characters.length - 1 && timeLeft > 0) {
+            if (!isTyping) {
+                timer = setInterval(initTimer, 1000);
+                isTyping = true;
+            }
+            if (typedChar == null) {
+                if (charIndex > 0) {
+                    charIndex--;
+                    if (characters[charIndex].classList.contains("incorrect")) {
+                        mistakes--;
+                    }
+                    characters[charIndex].classList.remove("correct", "incorrect");
+                }
+            } else {
+                if (characters[charIndex].innerText == typedChar) {
+                    characters[charIndex].classList.add("correct");
+                } else {
+                    mistakes++;
+                    characters[charIndex].classList.add("incorrect");
+                }
+                charIndex++;
+            }
+            characters.forEach(span => span.classList.remove("active"));
+            characters[charIndex].classList.add("active");
+            let wpm = Math.round(((charIndex - mistakes) / 5) / (maxTime - timeLeft) * 120);
+            wpm = wpm < 0 || !wpm || wpm === Infinity ? 0 : wpm;
+
+            wpmTag.innerText = wpm;
+            mistakeTag.innerText = mistakes;
+            cpmTag.innerText = charIndex - mistakes;
+        } else {
+            clearInterval(timer);
+            inpField.value = "";
+        }
+    }
+
+    function initTimer() {
+        if (timeLeft > 0) {
+            timeLeft--;
+            timeTag.innerText = timeLeft;
+            let wpm = Math.round(((charIndex - mistakes) / 5) / (maxTime - timeLeft) * 120);
+            wpmTag.innerText = wpm;
+        } else {
+            clearInterval(timer);
+        }
+    }
+
+    function previousPage() {
+        if (pageNumber > 0) {
+            pageNumber--;
+            loadPage();
+            clearInterval(timer);
+            timeLeft = maxTime;
+            charIndex = mistakes = isTyping = 0;
+            inpField.value = "";
+            timeTag.innerText = timeLeft;
+            wpmTag.innerText = 0;
+            mistakeTag.innerText = 0;
+            cpmTag.innerText = 0;
+        }
+    }
+
+    function nextPage() {
+        if (pageNumber < pages.length - 1) {
+            pageNumber++;
+            loadPage();
+            clearInterval(timer);
+            timeLeft = maxTime;
+            charIndex = mistakes = isTyping = 0;
+            inpField.value = "";
+            timeTag.innerText = timeLeft;
+            wpmTag.innerText = 0;
+            mistakeTag.innerText = 0;
+            cpmTag.innerText = 0;
+        }
+    }
+
+    function backToDescriptionPage() {
+        document.querySelector('#welcome input[type=text]').classList.remove('hidden');
+        document.querySelector('#welcome button').classList.remove('hidden');
+        document.querySelector('#game').classList.add('hidden');
+        document.querySelector('#description').classList.remove('hidden');
+        clearInterval(timer);
+        timeLeft = maxTime;
+        charIndex = mistakes = isTyping = 0;
+        inpField.value = "";
+        timeTag.innerText = timeLeft;
+        wpmTag.innerText = 0;
+        mistakeTag.innerText = 0;
+        cpmTag.innerText = 0;
+    }
+
+    // loadPage();
+    // inpField.addEventListener("input", initTyping);
+    // tryAgainBtn.addEventListener("click", resetGame);
 })();

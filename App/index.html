@@ -17,15 +17,74 @@
         <section id="welcome">
             <article>
                 <p>
-                    Welcome to The GutenDext! Search books you would like to type.
+                    Welcome to The GutenDext! Practice speed typing with entire books.
                 </p>
-                <input type="text" placeholder="Search..." id="searchTerms">
+                <input type="text" placeholder="Search..." id="search-bar">
                 <button>Search</button>
             </article>
         </section>
         <section id="results">
         </section>
+        <section id="description" class="hidden">
+            <article>
+                <img src="https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg" alt="TEMP IMG">
+                <div id="details">
+                    <p id="title">Title:</p>
+                    <p id="author">Author:</p>
+                    <p id="wordCount">Word Count:</p>
+                    <p id="characterCount">Character Count:</p>
+                    <div id="subjects">
+                        <p>Subjects:</p>
+                        <ul>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+            <button>Confirm</button>
+        </section>
+        <section id="game" class="hidden">
+            <article>
+                <div class="wrapper">
+                    <input type="text" class="input-field">
+                    <div class="content-box">
+                        <div class="typing-text">
+                            <p></p>
+                        </div>
+                        <div class="content">
+                            <ul class="result-details">
+                                <li class="time">
+                                    <p>Time Left:</p>
+                                    <span><b>120</b>s</span>
+                                </li>
+                                <li class="mistake">
+                                    <p>Mistakes:</p>
+                                    <span>0</span>
+                                </li>
+                                <li class="wpm">
+                                    <p>WPM:</p>
+                                    <span>0</span>
+                                </li>
+                                <li class="cpm">
+                                    <p>CPM:</p>
+                                    <span>0</span>
+                                </li>
+                            </ul>
+                            <!-- <button>Try Again</button> -->
+                            <button>Previous Page</button>
+                            <p></p>
+                            <button>Next Page</button>
+                        </div>
+                        <button>Back</button>
+                    </div>
+                </div>
+            </article>
+        </section>
+        <section id="loading" class="hidden">
+            <h2>Loading...</h2>
+        </section>
     </main>
+    <script src="pages.js"></script>
 </body>
 
 </html>

@@ -6,6 +6,7 @@ import urllib.request  # the lib that handles the url stuff
 def getBookText(url):
     bookText = ""
     try :
+        print("Retrieval of .txt file from " + url)
         for line in urllib.request.urlopen(url):
             bookText += line.decode('utf-8')
         eel.returnResult(bookText)
